@@ -13,7 +13,8 @@ public:
         read(parameters.lef_file, parameters.def_file);
         setUnitCosts();
     }
-    
+    DBU getLibDBU() const { return libDBU; }
+
     CostT getUnitLengthWireCost() const { return unit_length_wire_cost; }
     CostT getUnitViaCost() const { return unit_via_cost; }
     CostT getUnitLengthShortCost(const int layerIndex) const { return unit_length_short_costs[layerIndex]; }

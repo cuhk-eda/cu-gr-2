@@ -1,7 +1,7 @@
 #include "GridGraph.h"
 #include "GRNet.h"
 
-GridGraph::GridGraph(const Design& design, const Parameters& params): parameters(params) {
+GridGraph::GridGraph(const Design& design, const Parameters& params): libDBU(design.getLibDBU()), parameters(params) {
     gridlines = design.getGridlines();
     nLayers = design.getNumLayers();
     xSize = gridlines[0].size() - 1;
@@ -16,6 +16,8 @@ GridGraph::GridGraph(const Design& design, const Parameters& params): parameters
         }
     }
     
+    m2_pitch = design.getLayer(1).getPitch();
+
     layerNames.resize(nLayers);
     layerDirections.resize(nLayers);
     layerMinLengths.resize(nLayers);

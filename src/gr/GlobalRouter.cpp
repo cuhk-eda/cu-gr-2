@@ -126,10 +126,10 @@ void GlobalRouter::route() {
     t3 = std::chrono::duration<double>(std::chrono::high_resolution_clock::now() - t).count();
     t = std::chrono::high_resolution_clock::now();
     
-    std::cout << "iteration statistics " 
-        << n1 << " " << std::setprecision(3) << std::fixed << t1 << " " 
-        << n2 << " " << std::setprecision(3) << std::fixed << t2 << " " 
-        << n3 << " " << std::setprecision(3) << std::fixed << t3 << std::endl;
+    // std::cout << "iteration statistics " 
+    //     << n1 << " " << std::setprecision(3) << std::fixed << t1 << " " 
+    //     << n2 << " " << std::setprecision(3) << std::fixed << t2 << " " 
+    //     << n3 << " " << std::setprecision(3) << std::fixed << t3 << std::endl;
     
     printStatistics();
     if (parameters.write_heatmap) gridGraph.write();
@@ -239,25 +239,69 @@ void GlobalRouter::getGuides(const GRNet& net, vector<std::pair<int, utils::BoxT
 }
 
 void GlobalRouter::printStatistics() const {
+    log() << "routing statistics" << std::endl;
+    loghline();
+
+    // wire length and via count
+    uint64_t wireLength = 0;
+    int viaCount = 0;
+    vector<vector<vector<int>>> wireUsage;
+    wireUsage.assign(
+        gridGraph.getNumLayers(), vector<vector<int>>(gridGraph.getSize(0), vector<int>(gridGraph.getSize(1), 0))
+    );
+    for (const auto& net : nets) {
+        GRTreeNode::preorder(net.getRoutingTree(), [&] (std::shared_ptr<GRTreeNode> node) {
+            for (const auto& child : node->children) {
+                if (node->layerIdx == child->layerIdx) {
+                    unsigned direction = gridGraph.getLayerDirection(node->layerIdx);
+                    int l = min((*node)[direction], (*child)[direction]);
+                    int h = max((*node)[direction], (*child)[direction]);
+                    int r = (*node)[1 - direction];
+                    for (int c = l; c < h; c++) {
+                        wireLength += gridGraph.getEdgeLength(direction, c);
+                        int x = direction == MetalLayer::H ? c : r;
+                        int y = direction == MetalLayer::H ? r : c;
+                        wireUsage[node->layerIdx][x][y] += 1;
+                    }
+                } else {
+                    viaCount += abs(node->layerIdx - child->layerIdx);
+                }
+            }
+        });
+    }
+    
+    // resource
+    CapacityT overflow = 0;
+
     CapacityT minResource = std::numeric_limits<CapacityT>::max();
     GRPoint bottleneck(-1, -1, -1);
     for (int layerIndex = parameters.min_routing_layer; layerIndex < gridGraph.getNumLayers(); layerIndex++) {
         unsigned direction = gridGraph.getLayerDirection(layerIndex);
         for (int x = 0; x < gridGraph.getSize(0) - 1 + direction; x++) {
             for (int y = 0; y < gridGraph.getSize(1) - direction; y++) {
-                auto resource = gridGraph.getEdge(layerIndex, x, y).getResource();
+                CapacityT resource = gridGraph.getEdge(layerIndex, x, y).getResource();
                 if (resource < minResource) {
                     minResource = resource;
                     bottleneck = {layerIndex, x, y};
                 }
+                CapacityT usage = wireUsage[layerIndex][x][y];
+                CapacityT capacity = max(gridGraph.getEdge(layerIndex, x, y).capacity, 0.0);
+                if (usage > 0.0 && usage > capacity) {
+                    overflow += usage - capacity;
+                }
             }
         }
     }
+    
+    log() << "wire length (metric):  " << wireLength / gridGraph.getM2Pitch() << std::endl;
+    log() << "total via count:       " << viaCount << std::endl;
+    log() << "total wire overflow:   " << (int)overflow << std::endl;
     logeol();
-    log() << "routing statistics" << std::endl;
-    loghline();
+
     log() << "min resource: " << minResource << std::endl;
-    log() << "bottleneck: " << bottleneck << std::endl;
+    log() << "bottleneck:   " << bottleneck << std::endl;
+
+    logeol();
 }
 
 void GlobalRouter::write(std::string guide_file) {

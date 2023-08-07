@@ -17,6 +17,8 @@ struct GraphEdge {
 class GridGraph {
 public:
     GridGraph(const Design& design, const Parameters& params);
+    inline DBU getLibDBU() const { return libDBU; }
+    inline DBU getM2Pitch() const { return m2_pitch; }
     inline unsigned getNumLayers() const { return nLayers; }
     inline unsigned getSize(unsigned dimension) const { return (dimension ? ySize : xSize); }
     inline std::string getLayerName(int layerIndex) const { return layerNames[layerIndex]; }
@@ -32,6 +34,7 @@ public:
     inline GraphEdge getEdge(const int layerIndex, const int x, const int y) const {return graphEdges[layerIndex][x][y]; }
     
     // Costs
+    DBU getEdgeLength(unsigned direction, unsigned edgeIndex) const;
     CostT getWireCost(const int layerIndex, const utils::PointT<int> u, const utils::PointT<int> v) const;
     CostT getViaCost(const int layerIndex, const utils::PointT<int> loc) const;
     inline CostT getUnitViaCost() const { return unit_via_cost; }
@@ -58,6 +61,8 @@ public:
     void write(const std::string heatmap_file="heatmap.txt") const;
     
 private:
+    const DBU libDBU;
+    DBU m2_pitch;
     const Parameters& parameters;
     
     unsigned nLayers;
@@ -91,7 +96,6 @@ private:
     inline CostT getUnitLengthShortCost(const int layerIndex) const { return unit_length_short_costs[layerIndex]; }
     
     inline double logistic(const CapacityT& input, const double slope) const;
-    DBU getEdgeLength(unsigned direction, unsigned edgeIndex) const;
     CostT getWireCost(const int layerIndex, const utils::PointT<int> lower, const CapacityT demand = 1.0) const;
     
     // Methods for updating demands 

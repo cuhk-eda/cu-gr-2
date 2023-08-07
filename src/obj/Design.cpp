@@ -218,7 +218,7 @@ void Design::read(std::string lef_file, std::string def_file) {
     log() << "num of ports:        " << numPorts << std::endl;
     log() << "num of nets :        " << nets.size() << std::endl;
     log() << "num of special nets: " << numSpecialNets << std::endl;
-    log() << "gcell grid:          " << gridlines[0].size() - 1 << " x " << gridlines[1].size() - 1 << std::endl;
+    log() << "gcell grid:          " << gridlines[0].size() - 1 << " x " << gridlines[1].size() - 1 << " x " << getNumLayers() << std::endl;
     logeol();
     
 }
