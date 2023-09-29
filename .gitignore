@@ -1,6 +1,9 @@
 .vscode
 build
 debug
+output
+dataset
+tr
 run*/
 scripts/__pycache__
 tags
