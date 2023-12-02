@@ -22,7 +22,7 @@ MetalLayer::MetalLayer(const Rsyn::PhysicalLayer& rsynLayer, const vector<Rsyn::
     // Design rules not parsed thoroughly
     // Min area
     minArea = static_cast<DBU>(std::round(layer->area() * libDBU * libDBU));
-    minLength = minArea / width - width;
+    minLength = max(minArea / width - width, (DBU)0);
     
     // Parallel run spacing
     const int numSpacingTable = layer->numSpacingTable();
