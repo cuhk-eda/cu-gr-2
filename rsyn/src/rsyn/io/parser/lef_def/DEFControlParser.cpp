@@ -214,6 +214,7 @@ int defRow(defrCallbackType_e type, defiRow* rowInfo, defiUserData userData) {
 // -----------------------------------------------------------------------------
 
 int defPin(defrCallbackType_e, defiPin *pin, defiUserData userData) {
+	if (!strcmp(pin->use(), "POWER") || !strcmp(pin->use(), "GROUND")) return 0;
 	DefDscp &defDscp = getDesignFromUserData(userData);
 	defDscp.clsPorts.resize(defDscp.clsPorts.size() + 1);
 	DefPortDscp &defPin = defDscp.clsPorts.back();
